@@ -143,7 +143,7 @@ def depthFirstSearch(problem):
                         current_route.append(child[1])
                         frontier.push((child[0], current_route))
 
-    print("No route found!")
+    #print("No route found!")
 
     util.raiseNotDefined()
     return list()
@@ -185,26 +185,46 @@ def breadthFirstSearch(problem):
                         frontier.push((child[0], current_route))
                         frontierCopy.add(child[0])
 
-    print("No route found!")
+    #print("No route found!")
 
     util.raiseNotDefined()
     return list()
 
 
 def uniformCostSearch(problem):
-    """Search the node of least total cost first."""
-    visited = set()
-    actions = []
-    frontier = util.PriorityQueue
-    currNode = problem.getStartState()
+    startState = problem.getStartState()
+    frontier = util.PriorityQueue()  # A helper stack of (state,route_to_state)
+    frontierCopy = set()
+    visited = set()  # A set of state recording the explored nodes
 
-    frontier.push(currNode)
+    if problem.isGoalState(startState):
+        return problem.getStartState
+    else:
+        frontier.push(startState, list(), 0)
+        frontierCopy.add(startState)
 
-    while not frontier.isEmpty():
+        while not frontier.isEmpty():
+            curState = frontier.pop()
+            frontierCopy.pop()
+            if problem.isGoalState(curState[0]):
+                # print("Node found)
+                return curState[1]
+            else:
+                visited.add(curState[0])
+                successors = problem.getSuccessors(curState[0])
+                for child in successors:
+                    # print(child)
+                    if child[0] not in visited and isInFrontier(frontierCopy, child[0]):
+                        current_route = list(curState[1])
+                        current_route.append(child[1])
+                        frontier.push((child[0], current_route))
+                        frontierCopy.add(child[0])
+                    #elif
 
-
+    #print("No route found!")
 
     util.raiseNotDefined()
+    return list()
 
 def nullHeuristic(state, problem=None):
     """
@@ -218,6 +238,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     "*** YOUR CODE HERE ***"
 
     util.raiseNotDefined()
+
 
 # Abbreviations
 bfs = breadthFirstSearch
