@@ -70,7 +70,7 @@ def tinyMazeSearch(problem):
     from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
-    return  [s, s, w, s, w, w, s, w]
+    return [s, s, w, s, w, w, s, w]
 
 
 def depthFirstSearch(problem):
@@ -159,6 +159,32 @@ def isInFrontier(frontierQueue, item):
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     frontier = util.Queue()  # A helper stack of (state,route_to_state)
+    visited = set()  # A set of state recording the explored nodes
+
+    if problem.isGoalState(problem.getStartState()):
+        return problem.getStartState
+    else:
+        frontier.push((problem.getStartState(), list()))
+
+        while not frontier.isEmpty():
+            curState = frontier.pop()
+            if problem.isGoalState(curState[0]):
+                # print("Node found)
+                return curState[1]
+            else:
+                if curState[0] not in visited:
+                    visited.add(curState[0])
+                    successors = problem.getSuccessors(curState[0])
+                    for child in successors:
+                        # print(child)
+                        if child[0] not in visited:
+                            current_route = list(curState[1])
+                            current_route.append(child[1])
+                            frontier.push((child[0], current_route))
+
+
+"""def breadthFirstSearch(problem):
+    frontier = util.Queue()  # A helper stack of (state,route_to_state)
     frontierCopy = set()
     visited = set()  # A set of state recording the explored nodes
 
@@ -188,20 +214,67 @@ def breadthFirstSearch(problem):
     #print("No route found!")
 
     util.raiseNotDefined()
-    return list()
-
-
-def isInFrontierCost(frontierQueue, item):
-    if frontierQueue.__contains__(item) and frontierQueue:
-        return True
-    else:
-        return False
-
-def calcTotCost(frontier, explored, actions):
-    return 0
+    return list()"""
 
 
 def uniformCostSearch(problem):
+
+    frontier = util.PriorityQueue()  # A helper stack of (state,route_to_state)
+    visited = set()  # A set of state recording the explored nodes
+
+    if problem.isGoalState(problem.getStartState()):
+        return problem.getStartState
+    else:
+        frontier.push((problem.getStartState(), list()), 0)
+
+        while not frontier.isEmpty():
+            curState = frontier.pop()
+            if problem.isGoalState(curState[0]):
+                # print("Node found)
+                return curState[1]
+            else:
+                if curState[0] not in visited:
+                    visited.add(curState[0])
+                    successors = problem.getSuccessors(curState[0])
+                    for child in successors:
+                        # print(child)
+                        current_route = list(curState[1])
+                        current_route.append(child[1])
+                        frontier.update((child[0], current_route),
+                                        problem.getCostOfActions(current_route) + child[2])
+                        # print(child)
+
+
+def isInFrontierCost(frontierQueue, item):
+    for elem in frontierQueue:
+        if elem[0] == item[0] and elem[2] >= item[2]:
+            frontierQueue.remove(elem)
+            frontierQueue.add(0, item)
+            return True
+        else:
+            return False
+
+
+def calcTotCost(frontier, explored, actions):
+    cost = 0
+    for item in frontier:
+        if item[0] in actions:
+            cost += item[2]
+
+    for item in explored:
+        if item[0] in actions:
+            cost += item[2]
+
+    return cost
+
+
+def makeList(visited, nodeHistory):
+    """  parse list from node actions
+    convert set
+    use string comp to reverse string"""
+
+
+"""def uniformCostSearch(problem):
     startState = problem.getStartState()
     frontier = util.PriorityQueue()  # A helper stack of (state,route_to_state)
     frontierCopy = set()
@@ -216,7 +289,6 @@ def uniformCostSearch(problem):
         frontierCopy.add(startState)
         pathCost[startState] = list(startState)
 
-
         while not frontier.isEmpty():
             curState = frontier.pop()
             frontierCopy.remove(curState[0])
@@ -228,26 +300,45 @@ def uniformCostSearch(problem):
                 visitedCopy.add(curState[0])
                 visited.push(curState[0])
                 successors = problem.getSuccessors(curState[0])
+
                 for child in successors:
-                    # print(child)
                     if child[0] not in visitedCopy and not isInFrontier(frontierCopy, child[0]):
                         # print(child)
+                        # old list
+                        current_route = list(curState[1])
+                        current_route.append(child[1])
+                        # new list
                         parentActions = pathCost[curState]
                         parentActions.append(child[0])
                         pathCost[child[0]] = parentActions
 
-                        frontier.push(child, 0) # fix later
-                        frontierCopy.add(child[0])
-
-
+                        tempCost = calcTotCost(frontierCopy, visitedCopy, pathCost)
+                        frontierCopy.add(child)
+                        totalCost = tempCost + child[2]
+                        frontier.push(child, totalCost)
 
                     elif isInFrontierCost(frontierCopy, child[0]):
-                        print(" ")
+                        # old list
+                        current_route = list(curState[1])
+                        current_route.append(child[1])
+                        # new list
+                        parentActions = pathCost[curState]
+                        parentActions.append(child[0])
+                        pathCost[child[0]] = parentActions
 
-    #print("No route found!")
+                        tempCost = calcTotCost(frontierCopy, visitedCopy, pathCost)
+                        totalCost = tempCost + child[2]
+                        frontier.update(child, totalCost)
+                makeList(visitedCopy,parentActions)
+
+
+
+
+    # print("No route found!")
 
     util.raiseNotDefined()
-    return list()
+    return list()"""
+
 
 def nullHeuristic(state, problem=None):
     """
@@ -256,10 +347,32 @@ def nullHeuristic(state, problem=None):
     """
     return 0
 
-def aStarSearch(problem, heuristic=nullHeuristic):
-    """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
 
+def aStarSearch(problem, heuristic=nullHeuristic):
+    frontier = util.PriorityQueue()  # A helper stack of (state,route_to_state)
+    visited = set()  # A set of state recording the explored nodes
+
+    if problem.isGoalState(problem.getStartState()):
+        return problem.getStartState
+    else:
+        frontier.push((problem.getStartState(), list()), 0)
+
+        while not frontier.isEmpty():
+            curState = frontier.pop()
+            if problem.isGoalState(curState[0]):
+                # print("Node found)
+                return curState[1]
+            else:
+                if curState[0] not in visited:
+                    visited.add(curState[0])
+                    successors = problem.getSuccessors(curState[0])
+                    for child in successors:
+                        # print(child)
+                        if child[0] not in visited:
+                            current_route = list(curState[1])
+                            current_route.append(child[1])
+                            frontier.update((child[0], current_route),
+                                            problem.getCostOfActions(current_route) + heuristic(child[0], problem))
     util.raiseNotDefined()
 
 
